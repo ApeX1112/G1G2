@@ -1,0 +1,60 @@
+<form method="post">
+    {% csrf_token %}
+    <label for="aircraftSelect">Select Aircraft Type:</label>
+    <select id="aircraftSelect" name="faa_designator">
+        <option value="">Choose an aircraft</option>
+        {% for aircraft in aircraft_list %}
+        {% if aircraft.faa_designator %}
+        <option value="{{ aircraft.faa_designator }}"
+            {% if selected_aircraft == aircraft.faa_designator %}selected{% endif %}>
+            {{ aircraft.faa_designator }}
+        </option>
+        {% endif %}
+        {% endfor %}
+    </select>
+    <button type="submit">Submit</button>
+
+    {% if aircraft_info %}
+        <div id="aircraftInfo" style="margin-top: 20px;">
+            <h3>Aircraft Information for {{ aircraft_info.faa_designator }}</h3>
+            
+            
+            
+            <p><strong>Length ft:</strong> {{ aircraft_info.length_ft }} ft</p>
+            <p><strong>Tail Height at oew ft :</strong> {{ aircraft_info.tail_height_at_oew_ft }} ft</p>
+            <p><strong>Wheelbase ft:</strong> {{ aircraft_info.wheelbase_ft }} ft</p>
+            
+        </div>
+
+
+        <div id='meteo'>
+            <form  method="post">
+                <label for="temp">temperature:</label>
+                <input id='temp' type="integer" name="temp">
+                <label for="hum">humidité:</label>
+                <input id='hum' type="integer" name="hum">
+
+                <label for="temp1">temperature 2 jours avant:</label>
+                <input id='temp1' type="integer" name="temp">
+
+                <label for="hum1">humidité 2 jours avant :</label>
+                <input id='hum1' type="integer" name="temp">
+
+                
+
+            </form>
+        </div>
+
+        <form method="post" style="margin-top: 20px;">
+            {% csrf_token %}
+            <h3>Select Algorithm</h3>
+            <label for="algorithmChoice">Choose Algorithm:</label>
+            <select id="algorithmChoice" name="algorithm_choice" required>
+                <option value="">Select an option</option>
+                <option value="algorithm1">Algorithm 1</option>
+                <option value="algorithm2">Algorithm 2</option>
+            </select>
+            <button type="submit">Submit </button>
+        </form>
+    {% endif %}
+</form>

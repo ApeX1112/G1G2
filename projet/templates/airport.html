@@ -1,0 +1,230 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <h1>Dashboard</h1>
+
+    <a href="{% url 'model'%}">model page</a>
+
+    <!-- Temperature and Humidity (Line Chart) -->
+    <canvas id="tempHumidityChart" width="400" height="200"></canvas>
+    
+    <!-- Average Delay of Deicing (Bar Chart) -->
+    <canvas id="avgDeicingDelayChart" width="400" height="200"></canvas>
+
+    
+
+    
+    <!-- Weather Conditions Breakdown (Radar Chart) -->
+    <canvas id="weatherRadarChart" width="400" height="200"></canvas>
+
+    <!-- Daily Aircraft Count (Line Chart) -->
+    <canvas id="dailyAircraftChart" width="400" height="200"></canvas>
+
+    <!-- Aircraft Length vs Duration (Bubble Chart) -->
+    <canvas id="aircraftLengthBubbleChart" width="400" height="200"></canvas>
+
+    <!-- Monthly Deicing Operations (Bar Chart) -->
+    <canvas id="monthlyDeicingChart" width="400" height="200"></canvas>
+
+    <!-- Average Fluid Usage per FAA Designator (Radar Chart) -->
+    <canvas id="faaFluidRadarChart" width="400" height="200"></canvas>
+
+    <!-- Temperature and Duration (Line Chart) -->
+    <canvas id="tempDurationLineChart" width="400" height="200"></canvas>
+
+    <script>
+        var tempHumidityCtx = document.getElementById('tempHumidityChart').getContext('2d');
+        var tempHumidityChart = new Chart(tempHumidityCtx, {
+            type: 'line',
+            data: {
+                labels: {{ temp_humidity_labels|safe }},  // Dates as labels
+                datasets: [{
+                    label: 'Temperature (°C)',
+                    data: {{ temperature_data|safe }},
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    fill: false
+                }, {
+                    label: 'Humidity (%)',
+                    data: {{ humidity_data|safe }},
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    fill: false
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        },
+                        type: 'category',  // Specify as a category for the date
+                        ticks: {
+                            autoSkip: true,
+                            maxTicksLimit: 20
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Values'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Average Delay of Deicing (Bar Chart)
+        var avgDeicingDelayCtx = document.getElementById('avgDeicingDelayChart').getContext('2d');
+        var avgDeicingDelayChart = new Chart(avgDeicingDelayCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ avg_delay_labels|safe }},  // Days as labels
+                datasets: [{
+                    label: 'Average Delay (minutes)',
+                    data: {{ avg_delay_data|safe }},
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Average Delay (minutes)'
+                        }
+                    }
+                }
+            }
+        });
+
+        
+
+        
+
+        // Weather Conditions Breakdown (Radar Chart)
+        var weatherRadarCtx = document.getElementById('weatherRadarChart').getContext('2d');
+        var weatherRadarChart = new Chart(weatherRadarCtx, {
+            type: 'radar',
+            data: {
+                labels: {{ weather_labels|safe }},
+                datasets: [{
+                    label: 'Deicing Duration (minutes)',
+                    data: {{ weather_radar_data|safe }},
+                    backgroundColor: 'rgba(255, 206, 86, 0.6)'
+                }]
+            }
+        });
+
+        // Daily Aircraft Count (Line Chart)
+        var dailyAircraftCtx = document.getElementById('dailyAircraftChart').getContext('2d');
+        var dailyAircraftChart = new Chart(dailyAircraftCtx, {
+            type: 'line',
+            data: {
+                labels: {{ daily_aircraft_labels|safe }},
+                datasets: [{
+                    label: 'Aircraft Count',
+                    data: {{ daily_aircraft_data|safe }},
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    fill: false
+                }]
+            }
+        });
+
+        // Aircraft Length vs Duration (Bubble Chart)
+        var aircraftLengthBubbleCtx = document.getElementById('aircraftLengthBubbleChart').getContext('2d');
+        var aircraftLengthBubbleChart = new Chart(aircraftLengthBubbleCtx, {
+            type: 'bubble',
+            data: {
+                datasets: [{
+                    label: 'Aircraft Length vs Duration',
+                    data: {{ aircraft_length_bubble_data|safe }},
+                    backgroundColor: 'rgba(255, 159, 64, 0.6)'
+                }]
+            }
+        });
+
+        // Monthly Deicing Operations (Bar Chart)
+        var monthlyDeicingCtx = document.getElementById('monthlyDeicingChart').getContext('2d');
+        var monthlyDeicingChart = new Chart(monthlyDeicingCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ monthly_labels|safe }},
+                datasets: [{
+                    label: 'Deicing Operations',
+                    data: {{ monthly_deicing_data|safe }},
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)'
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Average Fluid Usage per FAA Designator (Radar Chart)
+        var faaFluidRadarCtx = document.getElementById('faaFluidRadarChart').getContext('2d');
+        var faaFluidRadarChart = new Chart(faaFluidRadarCtx, {
+            type: 'radar',
+            data: {
+                labels: {{ faa_labels|safe }},
+                datasets: [{
+                    label: 'Fluid Usage',
+                    data: {{ faa_fluid_data|safe }},
+                    backgroundColor: 'rgba(255, 99, 132, 0.6)'
+                }]
+            }
+        });
+
+        // Temperature and Duration (Line Chart)
+        var tempDurationLineCtx = document.getElementById('tempDurationLineChart').getContext('2d');
+        var tempDurationLineChart = new Chart(tempDurationLineCtx, {
+            type: 'line',
+            data: {
+                labels: {{ temp_duration_labels|safe }},
+                datasets: [{
+                    label: 'Temperature (°C)',
+                    data: {{ temperature_data|safe }},
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    fill: false
+                }, {
+                    label: 'Duration (minutes)',
+                    data: {{ duration_data|safe }},
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    fill: false
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+    </script>
+
+</body>
+</html>
