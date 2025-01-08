@@ -4,6 +4,14 @@ from django.db.models import F, ExpressionWrapper, DurationField, Avg,Count
 import json
 from django.db.models.functions import ExtractMonth
 import calendar
+from django.http import JsonResponse
+
+import joblib
+import numpy as np
+
+
+
+
 
 def dashboard(request):
     # 1. Temperature and Humidity (Line Chart)
@@ -17,7 +25,7 @@ def dashboard(request):
     # 2. Average Delay of Deicing (Bar Chart)
     data_with_delay = AirportData.objects.exclude(atd__isnull=True, std__isnull=True).annotate(
         delay=ExpressionWrapper(
-            (F('atd') - F('std')),
+            ( F('duration')),
             output_field=DurationField()
         )
     )
@@ -61,7 +69,7 @@ def dashboard(request):
 
     # 7. Aircraft Length vs Duration (Bubble Chart)
     aircraft_length_bubble = AirportData.objects.values('length_ft', 'duration')
-    print(aircraft_length_bubble)
+    
     aircraft_length_bubble_data = [{'x': x['length_ft'], 'y': x['duration'], 'r': 10} for x in aircraft_length_bubble]
 
     # 8. Monthly Deicing Operations (Bar Chart)
@@ -112,53 +120,212 @@ def dashboard(request):
 
     return render(request, 'airport.html', context)
 
+import time 
+def predict(input):
+    time.sleep(1)
+    model=joblib.load('projet/model.pkl')
+    return model.predict(input)
+    
+def encode_carrier_from_abbr(carrier_abbr, carrier_list):
+    
+    # Create a zero vector with the same length as the carrier list
+    one_hot_vector = [0] * len(carrier_list)
 
+    
+    # Find the carrier in the list based on abbreviation
+    for index, full_carrier in enumerate(carrier_list):
+        if full_carrier.endswith(f"_{carrier_abbr}"):  # Match based on the abbreviation
+            one_hot_vector[index] = 1
+            break  # Exit the loop after finding the match
+    
+    return one_hot_vector
+def encode_month(month, month_list):
+    """
+    Convert a month name or number to a one-hot encoded vector.
+    
+    Parameters:
+        month (str): The name (e.g., "January") or number (e.g., "1") of the month.
+        month_list (list): The ordered list of months (e.g., "Month_January").
+    
+    Returns:
+        list: A one-hot encoded vector with a 1 at the position matching the month.
+    """
+    # Create a zero vector with the same length as the month list
+    one_hot_vector = [0] * len(month_list)
 
+    if month :
+
+        # Normalize the month input (e.g., convert number to name if needed)
+        if month.isdigit():
+            month = month_list[int(month) - 1]  # Convert to the corresponding month name
+        else:
+            month = f'Month_{month.capitalize()}'
+
+        # Find the index of the month in the list
+        try:
+            index = month_list.index(month)
+            one_hot_vector[index] = 1  # Set the corresponding index to 1
+        except ValueError:
+            # Month not found; handle it (e.g., leave as all zeros or raise an error)
+            pass
+        
+        return one_hot_vector
 
 def ModelView(request):
+    CARRIER_LIST = [
+        'CARRIER_AEG', 'CARRIER_AHO', 'CARRIER_AP', 'CARRIER_ATL', 'CARRIER_BV',
+        'CARRIER_CAR', 'CARRIER_CCC', 'CARRIER_DC', 'CARRIER_EJM', 'CARRIER_EN',
+        'CARRIER_ENT', 'CARRIER_EUR', 'CARRIER_EW', 'CARRIER_EXC', 'CARRIER_FR',
+        'CARRIER_FRD', 'CARRIER_GA', 'CARRIER_GAC', 'CARRIER_GTI', 'CARRIER_IFM',
+        'CARRIER_IG', 'CARRIER_JDI', 'CARRIER_KLC', 'CARRIER_LH', 'CARRIER_LO',
+        'CARRIER_LP', 'CARRIER_LPR', 'CARRIER_LS', 'CARRIER_LX', 'CARRIER_NJE',
+        'CARRIER_OY', 'CARRIER_PL', 'CARRIER_ROY', 'CARRIER_SCH', 'CARRIER_SK',
+        'CARRIER_SRN', 'CARRIER_STR', 'CARRIER_SWT', 'CARRIER_TOY', 'CARRIER_UPS',
+        'CARRIER_USA', 'CARRIER_VJT', 'CARRIER_W6', 'CARRIER_WIL', 'CARRIER_WR'
+    ]
 
+    MONTH_LIST = [
+        'Month_April','Month_December','Month_February','Month_January' , 'Month_March' , 'Month_May','Month_November','Month_October'
+    ]
     aircraft_list = AirportData.objects.values('faa_designator').distinct()
-    selected_craft = None
+    selected_aircraft = None
     aircraft_info = None
+    data={}
 
-    temp = None
-    hum = None
-    temp1 = None
-    hum1 = None
-    algorithm_choice = None
     
 
-    if request.method== 'POST':
 
-        if 'faa_designator' in request.POST:
-            # Aircraft selection
-            selected_aircraft = request.POST.get("faa_designator")
+    # Initialize variables for weather data
+    temp = hum = temp1 = hum1 = std = oat = type_ = fluid = water = carrier = algorithm_choice = None
+
+    # Get distinct carriers
+    carrier_list = AirportData.objects.values_list('CARRIER', flat=True).distinct().order_by('CARRIER')
+
+    prediction_result = None  # To store prediction result
+
+    if request.method == 'POST':
+        form_data = request.POST
+
+        # Handle Aircraft Selection
+        if 'faa_designator' in form_data:
+            selected_aircraft = form_data.get("faa_designator")
             aircraft_info = AirportData.objects.filter(faa_designator=selected_aircraft).first()
-            stage = "meteorological_data"  # Move to the meteorological data stage
+            data = {
+                "length_ft": aircraft_info.length_ft,
+                "tail_height_at_oew_ft": aircraft_info.tail_height_at_oew_ft,
+                "wheelbase_ft": aircraft_info.wheelbase_ft,
+                "wingspan_without_winglets": aircraft_info.Wingspan_ft_without_winglets_sharklets,
+                "wingspan_with_winglets": aircraft_info.Wingspan_ft_with_winglets_sharklets,
+                "cockpit_to_main_gear": aircraft_info.Cockpit_to_Main_Gear_ft,
+                "main_gear_width": aircraft_info.Main_Gear_Width_ft
+            }
 
-        elif 'temp' in request.POST and 'hum' in request.POST:
-            # Meteorological data input
-            temp = request.POST.get("temp")
-            hum = request.POST.get("hum")
-            temp1 = request.POST.get("temp1")
-            hum1 = request.POST.get("hum1")
-            stage = "algorithm_choice"  # Move to the algorithm choice stage
-
-        elif 'algorithm_choice' in request.POST:
-            # Algorithm choice
-            algorithm_choice = request.POST.get("algorithm_choice")
-            stage = "complete"  # Final stage
-
-
-    context={'aircraft_list':aircraft_list, 
-             'selected_aircraft':selected_craft,
-             'selected_aircraft':selected_craft,
-             'aircraft_info':aircraft_info,
-             'temp': temp,
-            'hum': hum,
-            'temp1': temp1,
-            'hum1': hum1,
-            'algorithm_choice': algorithm_choice,
             
-             }
-    return render(request,'model.html',context)
+
+            
+
+        # Handle Weather Conditions
+        temp = form_data.get("temperature")
+        hum = form_data.get("humidity")
+        temp1 = form_data.get("humidity2_days_ago")
+        hum1 = form_data.get("humidity2_days_ago_2")
+        std = form_data.get("std")
+        oat = form_data.get("oat")
+        type_ = form_data.get("type")
+        fluid = form_data.get("fluid")
+        water = form_data.get("water")
+        carrier = form_data.get("carrier")
+
+        carrier_encoded = encode_carrier_from_abbr(carrier, CARRIER_LIST)
+
+        Wingspan_ft_without_winglets=form_data.get("wingspanWithoutWinglets")
+        Wingspan_ft_with_winglets=form_data.get("wingspanWithWinglets")
+        Cockpit_to_Main_Gear=form_data.get("cockpitToMainGear")
+        Main_Gear_Width=form_data.get("mainGearWidth")
+        length=form_data.get("length")
+        tailHeight=form_data.get("tailHeight")
+        wheelbase=form_data.get("wheelbase")
+
+        month = form_data.get("month")  # Numeric representation of the month
+        one_step_fluid = form_data.get("one_step_fluid")
+        two_step_i_fluid = form_data.get("two_step_i_fluid")
+        two_step_ii_fluid = form_data.get("two_step_ii_fluid")
+        meteo_numerical = form_data.get("meteo_numerical")
+        deicing_time_shift_1 = form_data.get("deicing_time_shift_1")
+        deicing_time_shift_2 = form_data.get("deicing_time_shift_2")
+        deicing_time_shift_3 = form_data.get("deicing_time_shift_3")
+        if deicing_time_shift_3:
+            deicing_time_rolling = (float(deicing_time_shift_1)+float(deicing_time_shift_2)+float(deicing_time_shift_3))/3
+
+        month_encoded = encode_month(month, MONTH_LIST)
+
+
+
+        
+        
+
+        # Handle Algorithm Selection
+        algorithm_choice = form_data.get("algorithm_choice")
+
+        # Debugging Prints (optional)
+        if algorithm_choice:
+            prediction_input = [
+            temp, hum,
+            temp1, hum1,
+            Wingspan_ft_without_winglets,Wingspan_ft_with_winglets
+            ,length,tailHeight,
+            wheelbase,Cockpit_to_Main_Gear,
+            Main_Gear_Width,std,type_,fluid,water,oat,one_step_fluid
+            ,two_step_i_fluid,two_step_ii_fluid,meteo_numerical
+        ] + carrier_encoded +[2025]+month_encoded+[deicing_time_shift_1,deicing_time_shift_2,deicing_time_shift_3,deicing_time_rolling]
+        
+        
+            prediction_input=np.array(prediction_input).astype('float')
+
+        # If the request is AJAX, return a JSON response
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            if algorithm_choice == 'catboost':
+
+                
+                prediction=predict(prediction_input)
+
+
+
+
+                if prediction is not None:
+                    response_data = {
+                        'message': 'Prediction successful',
+                        'prediction': prediction,
+                    }
+                else:
+                    response_data = {
+                        'message': 'Invalid input values for prediction',
+                        'prediction': None,
+                    }
+            else:
+                response_data = {
+                    'message': 'Selected algorithm is not supported yet.',
+                    'prediction': None,
+                }
+            return JsonResponse(response_data)
+
+    context = {
+        'aircraft_list': aircraft_list,
+        'selected_aircraft': selected_aircraft,
+        'data':data,
+        'aircraft_info': aircraft_info,
+        'temp': temp,
+        'hum': hum,
+        'temp1': temp1,
+        'hum1': hum1,
+        'std': std,
+        'oat': oat,
+        'type_': type_,
+        'fluid': fluid,
+        'water': water,
+        'algorithm_choice': algorithm_choice,
+        'carrier_list': carrier_list,
+        'prediction_result': prediction_result,
+    }
+
+    return render(request, 'model.html', context)

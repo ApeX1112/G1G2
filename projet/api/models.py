@@ -11,7 +11,7 @@ class AirportData(models.Model):
     tail_height_at_oew_ft = models.FloatField(blank=True, null=True)
     wheelbase_ft = models.FloatField(blank=True, null=True)
     date = models.DateField()
-    std = models.TimeField()
+    std = models.FloatField()
     atd = models.TimeField(blank=True, null=True)
     type = models.CharField(max_length=50)
     fluid = models.IntegerField()
@@ -20,6 +20,22 @@ class AirportData(models.Model):
     oat = models.FloatField()
     finish = models.CharField(max_length=255)
     duration = models.FloatField(blank=True, null=True)
+
+    Wingspan_ft_without_winglets_sharklets=models.FloatField(blank=True, null=True)
+    Wingspan_ft_with_winglets_sharklets=models.FloatField(blank=True, null=True)
+    Cockpit_to_Main_Gear_ft=models.FloatField(blank=True, null=True)
+    Main_Gear_Width_ft=models.FloatField(blank=True, null=True)
+    OneStep_Fluid=models.FloatField(blank=True, null=True)
+    TwoStep_I_Fluid=models.FloatField(blank=True, null=True)
+    TwoStep_II_Fluid=models.FloatField(blank=True, null=True)
+    deicing_time_minutes=models.FloatField(blank=True, null=True)
+    meteo_numerical=models.FloatField(blank=True, null=True)
+    Month=models.FloatField(blank=True, null=True)
+    Year=models.FloatField(blank=True, null=True)
+    ACMARK=models.CharField(max_length=255, null=True)
+    ACTYPE=models.CharField(max_length=255, null=True)
+    FLIGHT=models.CharField(max_length=255, null=True)
+    CARRIER=models.CharField(max_length=255, null=True)
 
     def __str__(self):
         return f"{self.start} - {self.date}"

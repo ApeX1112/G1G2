@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dynamic SVG Text Update</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        #svgContainer {
+            border: 1px solid #ccc;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        #controls {
+            margin-top: 20px;
+        }
+        #controls input {
+            padding: 8px;
+            font-size: 16px;
+            margin: 5px;
+        }
+        #updateButton {
+            padding: 8px 16px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Dynamic SVG Text Update</h1>
+
+    <!-- SVG Container -->
+    <div id="svgContainer">
+        <!-- SVG will be dynamically loaded here -->
+    </div>
+
+    <!-- Controls for Updating Text -->
+    <div id="controls">
+        <input type="text" id="text1" placeholder="Enter new text for Text 1">
+        <input type="text" id="text2" placeholder="Enter new text for Text 2">
+        <button id="updateButton">Update SVG Text</button>
+    </div>
+
+    <script>
+        // Function to load the external SVG file
+        async function loadSVG(filePath, containerId) {
+            try {
+                const response = await fetch(filePath);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const svgText = await response.text();
+                document.getElementById(containerId).innerHTML = svgText;
+            } catch (error) {
+                console.error('Error loading SVG:', error);
+                document.getElementById(containerId).innerHTML = '<p style="color:red;">Failed to load SVG.</p>';
+            }
+        }
+
+        // Update the SVG text dynamically
+        
+
+        // Load the SVG file on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSVG('plane.svg', 'svgContainer');
+
+            
+            
+        });
+    </script>
+
+</body>
+</html>

@@ -7,10 +7,158 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{% static 'css/airport.css' %}">
+    <link rel="stylesheet" href="https://unpkg.com/tailwindcss@2.2.19/dist/tailwind.min.css">
 </head>
 <body>
 
-    <h1>Dashboard</h1>
+    
+    <main class="main-content">
+            <nav class="sidebar">
+                <div class="flex items-center gap-2 mb-8">
+                    <!-- SVG icon and title -->
+                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    <h1 class="text-xl font-semibold">AeroTrack</h1>
+                </div>
+                <ul class="space-y-2">
+                    <li>
+                        <a href="#" class="flex items-center gap-2 px-4 py-2 rounded-lg border border-transparent bg-blue-500/10 text-blue-500 hover:border-blue-500">
+                            <!-- SVG icon -->
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                            </svg>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'model' %}" class="flex items-center gap-2 px-4 py-2 rounded-lg border border-transparent  hover:border-blue-500">
+                            <!-- SVG icon -->
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                            Model
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <header class="top-bar">
+                <div class="header-content">
+                    <h1>Deicing Operations</h1>
+                    
+                </div>
+                
+            </header>
+
+            <div class="dashboard-grid">
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3>Temperature & Humidity</h3>
+                        <div class="card-actions">
+                            <button class="btn-icon" data-chart="temp">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <canvas id="tempHumidityChart"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3>Deicing Delays</h3>
+                        <div class="card-actions">
+                            <button class="btn-icon" data-chart="delay">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <canvas id="avgDeicingDelayChart"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3>Weather Impact</h3>
+                        <div class="card-actions">
+                            <button class="btn-icon" data-chart="weather">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <canvas id="weatherRadarChart"></canvas>
+                </div>
+
+                
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3>Weather Impact</h3>
+                        <div class="card-actions">
+                            <button class="btn-icon" data-chart="weather">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <canvas id="aircraftLengthBubbleChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3>Weather Impact</h3>
+                        <div class="card-actions">
+                            <button class="btn-icon" data-chart="weather">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <canvas id="monthlyDeicingChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3>Weather Impact</h3>
+                        <div class="card-actions">
+                            <button class="btn-icon" data-chart="weather">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <canvas id="faaFluidRadarChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3>Weather Impact</h3>
+                        <div class="card-actions">
+                            <button class="btn-icon" data-chart="weather">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <canvas id="tempDurationLineChart"></canvas>
+                </div>
+            </div>
+
+
+
+
+
+            
+        </main>
+    </div>
 
     <a href="{% url 'model'%}">model page</a>
 
@@ -26,8 +174,7 @@
     <!-- Weather Conditions Breakdown (Radar Chart) -->
     <canvas id="weatherRadarChart" width="400" height="200"></canvas>
 
-    <!-- Daily Aircraft Count (Line Chart) -->
-    <canvas id="dailyAircraftChart" width="400" height="200"></canvas>
+
 
     <!-- Aircraft Length vs Duration (Bubble Chart) -->
     <canvas id="aircraftLengthBubbleChart" width="400" height="200"></canvas>
@@ -134,20 +281,7 @@
             }
         });
 
-        // Daily Aircraft Count (Line Chart)
-        var dailyAircraftCtx = document.getElementById('dailyAircraftChart').getContext('2d');
-        var dailyAircraftChart = new Chart(dailyAircraftCtx, {
-            type: 'line',
-            data: {
-                labels: {{ daily_aircraft_labels|safe }},
-                datasets: [{
-                    label: 'Aircraft Count',
-                    data: {{ daily_aircraft_data|safe }},
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    fill: false
-                }]
-            }
-        });
+        
 
         // Aircraft Length vs Duration (Bubble Chart)
         var aircraftLengthBubbleCtx = document.getElementById('aircraftLengthBubbleChart').getContext('2d');

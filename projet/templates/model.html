@@ -1,60 +1,463 @@
-<form method="post">
-    {% csrf_token %}
-    <label for="aircraftSelect">Select Aircraft Type:</label>
-    <select id="aircraftSelect" name="faa_designator">
-        <option value="">Choose an aircraft</option>
-        {% for aircraft in aircraft_list %}
-        {% if aircraft.faa_designator %}
-        <option value="{{ aircraft.faa_designator }}"
-            {% if selected_aircraft == aircraft.faa_designator %}selected{% endif %}>
-            {{ aircraft.faa_designator }}
-        </option>
-        {% endif %}
-        {% endfor %}
-    </select>
-    <button type="submit">Submit</button>
+{% load static %}
 
-    {% if aircraft_info %}
-        <div id="aircraftInfo" style="margin-top: 20px;">
-            <h3>Aircraft Information for {{ aircraft_info.faa_designator }}</h3>
-            
-            
-            
-            <p><strong>Length ft:</strong> {{ aircraft_info.length_ft }} ft</p>
-            <p><strong>Tail Height at oew ft :</strong> {{ aircraft_info.tail_height_at_oew_ft }} ft</p>
-            <p><strong>Wheelbase ft:</strong> {{ aircraft_info.wheelbase_ft }} ft</p>
-            
-        </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model</title>
+    <link rel="stylesheet" href="{% static 'css/model.css' %}">
+    <link rel="stylesheet" href="https://unpkg.com/tailwindcss@2.2.19/dist/tailwind.min.css">
+</head>
+<body>
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="flex items-center gap-2 mb-8">
+                <!-- SVG icon and title -->
+                <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                <h1 class="text-xl font-semibold">AeroTrack</h1>
+            </div>
+            <ul class="space-y-2">
+                <li>
+                    <a href="{% url 'dashboard' %}" class="flex items-center gap-2 px-4 py-2 rounded-lg border border-transparent hover:border-blue-500">
+                        <!-- SVG icon -->
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                        </svg>
+                        Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center gap-2 px-4 py-2 rounded-lg border border-transparent bg-blue-500/10 text-blue-500 hover:border-blue-500">
+                        <!-- SVG icon -->
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        Model
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <main class="main-content flex-1">
+            <div class="max-w-5xl mx-auto p-6">
+                <!-- Aircraft Selection Form -->
+                <div class="card mb-6 p-4">
+                    <form method="post" id="aircraftForm">
+                        {% csrf_token %}
+                        <label class="block text-sm font-medium mb-2">Aircraft Type</label>
+                        <select id="aircraftSelect" name="faa_designator" class="select-custom w-full">
+                            <option value="">Choose an aircraft</option>
+                            {% for aircraft in aircraft_list %}
+                                {% if aircraft.faa_designator %}
+                                    <option value="{{ aircraft.faa_designator }}" {% if selected_aircraft == aircraft.faa_designator %}selected{% endif %}>
+                                        {{ aircraft.faa_designator }}
+                                    </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn-primary mt-4 w-full">Submit</button>
+                    </form>
+                </div>
+
+                {% if aircraft_info %}
+                    <!-- Aircraft Information -->
+                    <div id="aircraftInfo" class="card mb-6 p-6">
+                        <h3 class="text-lg font-semibold mb-4">Aircraft Information for <span id="aircraftType">{{ aircraft_info.faa_designator }}</span></h3>
+
+                        <div id="svgContainer" >
+                            <!-- SVG will be dynamically loaded here -->
+                        </div>
+
+                        <style>
+                            #svgContainer {
+                            display: flex;
+                            justify-content: center; /* Centers horizontally */
+                            align-items: center; /* Centers vertically (if there's a fixed height) */
+                            width: 100%; /* Ensure container spans full width */
+                            height: auto; /* Adjust based on your needs */
+                            margin-left: 50px; /* Optional: Centers the container itself in its parent */
+                        }
+                        </style>
 
 
-        <div id='meteo'>
-            <form  method="post">
-                <label for="temp">temperature:</label>
-                <input id='temp' type="integer" name="temp">
-                <label for="hum">humidité:</label>
-                <input id='hum' type="integer" name="hum">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Information blocks -->
+                            <div class="bg-gray-200 rounded-lg p-4 text-center">
+                                <p class="text-sm text-gray-600">Length</p>
+                                <p class="text-2xl font-bold mt-1" id="length">{{ aircraft_info.length_ft }} ft</p>
+                            </div>
+                            <div class="bg-gray-200 rounded-lg p-4 text-center">
+                                <p class="text-sm text-gray-600">Tail Height</p>
+                                <p class="text-2xl font-bold mt-1" id="tailHeight">{{ aircraft_info.tail_height_at_oew_ft }} ft</p>
+                            </div>
+                            <div class="bg-gray-200 rounded-lg p-4 text-center">
+                                <p class="text-sm text-gray-600">Wheelbase</p>
+                                <p class="text-2xl font-bold mt-1" id="wheelbase">{{ aircraft_info.wheelbase_ft }} ft</p>
+                            </div>
+                            <div class="bg-gray-200 rounded-lg p-4 text-center">
+                                <p class="text-sm text-gray-600">Wingspan ft without winglets/sharklets</p>
+                                <p class="text-2xl font-bold mt-1" id="wingspanWithoutWinglets">{{ aircraft_info.Wingspan_ft_without_winglets_sharklets }} ft</p>
+                            </div>
+                            <div class="bg-gray-200 rounded-lg p-4 text-center">
+                                <p class="text-sm text-gray-600">Wingspan ft with winglets/sharklets</p>
+                                <p class="text-2xl font-bold mt-1" id="wingspanWithWinglets">{{ aircraft_info.Wingspan_ft_with_winglets_sharklets }} ft</p>
+                            </div>
+                            <div class="bg-gray-200 rounded-lg p-4 text-center">
+                                <p class="text-sm text-gray-600">Cockpit to Main Gear ft</p>
+                                <p class="text-2xl font-bold mt-1" id="cockpitToMainGear">{{ aircraft_info.Cockpit_to_Main_Gear_ft }} ft</p>
+                            </div>
+                            <div class="bg-gray-200 rounded-lg p-4 text-center">
+                                <p class="text-sm text-gray-600">Main Gear Width ft</p>
+                                <p class="text-2xl font-bold mt-1" id="mainGearWidth">{{ aircraft_info.Main_Gear_Width_ft }} ft</p>
+                            </div>
+                        </div>
+                    </div>
 
-                <label for="temp1">temperature 2 jours avant:</label>
-                <input id='temp1' type="integer" name="temp">
+                    <!-- Weather Conditions Form -->
+                    <div class="card mb-6 p-4">
+                        <form class="space-y-6" id="form1" method="post">
+                            {% csrf_token %}
+                            <h3 class="text-lg font-semibold mb-4">Weather Conditions</h3>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Temperature (°C)</label>
+                                <input type="number" class="input-custom w-full" placeholder="Enter temperature" name="temperature" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Humidity</label>
+                                <input type="number" class="input-custom w-full" placeholder="Enter humidity" name="humidity" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Humidity 2 days ago</label>
+                                <input type="number" class="input-custom w-full" placeholder="Enter humidity" name="humidity2_days_ago" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Humidity 2 days ago 2</label>
+                                <input type="number" class="input-custom w-full" placeholder="Enter humidity" name="humidity2_days_ago_2" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">STD</label>
+                                <input type="number" class="input-custom w-full" placeholder="Enter STD" name="std" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">OAT</label>
+                                <input type="number" class="input-custom w-full" placeholder="Enter OAT" name="oat" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Type</label>
+                                <input type="number" class="input-custom w-full" placeholder="Enter type" name="type" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Fluid</label>
+                                <input type="number" class="input-custom w-full" placeholder="Enter fluid" name="fluid" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Water</label>
+                                <input type="number" class="input-custom w-full" placeholder="Enter water" name="water" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">CARRIER</label>
+                                <select name="carrier" class="select-custom w-full" required>
+                                    <option value="">Choose a carrier</option>
+                                    {% for carrier in carrier_list %}
+                                        <option value="{{ carrier }}">{{ carrier }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Month</label>
+                                <select class="input-custom w-full" name="month" required>
+                                    <option value="" disabled selected>Select a month</option>
+                                    <option value="1">January</option>
+                                    <option value="2">February</option>
+                                    <option value="3">March</option>
+                                    <option value="4">April</option>
+                                    <option value="5">May</option>
+                                    <option value="6">June</option>
+                                    <option value="7">July</option>
+                                    <option value="8">August</option>
+                                    <option value="9">September</option>
+                                    <option value="10">October</option>
+                                    <option value="11">November</option>
+                                    <option value="12">December</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">OneStep Fluid</label>
+                                <input type="number" class="input-custom w-full" placeholder="Enter OneStep Fluid" name="one_step_fluid" required>
+                            </div>
 
-                <label for="hum1">humidité 2 jours avant :</label>
-                <input id='hum1' type="integer" name="temp">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">TwoStep I Fluid</label>
+                                <input type="number" class="input-custom w-full" placeholder="Enter TwoStep I Fluid" name="two_step_i_fluid" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">TwoStep II Fluid</label>
+                                <input type="number" class="input-custom w-full" placeholder="Enter TwoStep II Fluid" name="two_step_ii_fluid" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Meteo Numerical</label>
+                                <input type="number" class="input-custom w-full" placeholder="Enter meteo numerical" name="meteo_numerical" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Deicing Time Shift 1</label>
+                                <input type="number" class="input-custom w-full" placeholder="Enter deicing time shift 1" name="deicing_time_shift_1" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Deicing Time Shift 2</label>
+                                <input type="number" class="input-custom w-full" placeholder="Enter deicing time shift 2" name="deicing_time_shift_2" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Deicing Time Shift 3</label>
+                                <input type="number" class="input-custom w-full" placeholder="Enter deicing time shift 3" name="deicing_time_shift_3" required>
+                            </div>
+                            
 
-                
+                        </form>
+                    </div>
 
-            </form>
-        </div>
+                    <!-- Algorithm Selection Form -->
+                    <div class="card p-4">
+                        <form method="post" id="form2">
+                            {% csrf_token %}
+                            <h3 class="text-lg font-semibold mb-4">Algorithm Selection</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Choose Algorithm</label>
+                                    <select class="select-custom w-full" name="algorithm_choice" required>
+                                        <option value="">Select an algorithm</option>
+                                        <option value="catboost">catboost</option>
+                                        <!-- Add more algorithms as needed -->
+                                    </select>
+                                </div>
+                                <button class="btn-primary w-full" type="button" id="run">Run Algorithm</button>
+                            </div>
+                        </form>
+                    </div>
 
-        <form method="post" style="margin-top: 20px;">
-            {% csrf_token %}
-            <h3>Select Algorithm</h3>
-            <label for="algorithmChoice">Choose Algorithm:</label>
-            <select id="algorithmChoice" name="algorithm_choice" required>
-                <option value="">Select an option</option>
-                <option value="algorithm1">Algorithm 1</option>
-                <option value="algorithm2">Algorithm 2</option>
-            </select>
-            <button type="submit">Submit </button>
-        </form>
+                    <!-- Prediction Result Section -->
+                    <div id="predictionSection" class="card p-4 mt-6 hidden">
+                        <h3 class="text-lg font-semibold mb-4">Prediction Result</h3>
+                        <p id="predictionResult" class="text-2xl font-bold"></p>
+                    </div>
+
+                    <!-- Running Indicator -->
+                    <div id="runningIndicator" class="hidden mt-4 flex items-center space-x-2">
+                        <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                        </svg>
+                        <p class="text-blue-500">Running... Please wait.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+
+    {% if data %}
+        {{ data|json_script:"aircraftData" }}
+    {% else %}
+        <script id="aircraftData" type="application/json">{};</script>
     {% endif %}
-</form>
+
+    <!-- Your existing scripts, including the script to load SVG and update the grid -->
+    <script>
+        const aircraftInfo = JSON.parse(document.getElementById('aircraftData').textContent);
+
+        async function loadSVG(filePath, containerId) {
+            try {
+                const response = await fetch(filePath);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const svgText = await response.text();
+
+                // Load the SVG into the container
+                const container = document.getElementById(containerId);
+                container.innerHTML = svgText;
+
+                // Update the SVG elements dynamically after loading
+                const svgElement = container.querySelector('svg');
+                if (svgElement) {
+                    
+
+                    updateInfoGrid(svgElement, aircraftInfo);
+                }
+            } catch (error) {
+                console.error('Error loading SVG:', error);
+                document.getElementById(containerId).innerHTML = '<p style="color:red;">Failed to load SVG.</p>';
+            }
+        }
+
+        function updateInfoGrid(svgElement, data) {
+            // Update the SVG text content dynamically
+            const lengthText = svgElement.querySelector('#length');
+            const tailHeightText = svgElement.querySelector('#tailHeight');
+            const wheelbaseText = svgElement.querySelector('#wheelbase');
+            const wingspanWithoutText = svgElement.querySelector('#wingspanWithoutWinglets');
+            const wingspanWithText = svgElement.querySelector('#wingspanWithWinglets');
+            const cockpitToMainGearText = svgElement.querySelector('#cockpitToMainGear');
+            const mainGearWidthText = svgElement.querySelector('#mainGearWidth');
+
+            if (lengthText) lengthText.textContent = `Length: ${data.length_ft} ft`;
+            if (tailHeightText) tailHeightText.textContent = `Tail Height: ${data.tail_height_at_oew_ft} ft`;
+            if (wheelbaseText) wheelbaseText.textContent = `Wheelbase: ${data.wheelbase_ft} ft`;
+            if (wingspanWithoutText) wingspanWithoutText.textContent = `Wingspan Without Winglets: ${data.wingspan_without_winglets} ft`;
+            if (wingspanWithText) wingspanWithText.textContent = `Wingspan With Winglets: ${data.wingspan_with_winglets} ft`;
+            if (cockpitToMainGearText) cockpitToMainGearText.textContent = `Cockpit to Main Gear: ${data.cockpit_to_main_gear} ft`;
+            if (mainGearWidthText) mainGearWidthText.textContent = `Main Gear Width: ${data.main_gear_width} ft`;
+        }
+        // Load the SVG file on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSVG('{% static 'planesvg.svg' %}', 'svgContainer');
+
+            
+            
+        });
+    </script>
+    <!-- JavaScript to Handle Form Submissions and UI Updates -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form1 = document.getElementById('form1');
+            const form2 = document.getElementById('form2');
+            const runButton = document.getElementById('run');
+            const predictionSection = document.getElementById('predictionSection');
+            const predictionResult = document.getElementById('predictionResult');
+            const runningIndicator = document.getElementById('runningIndicator');
+
+
+            const aircraftType = document.getElementById('aircraftType');
+            const length = document.getElementById('length');  // Assuming the `length` element exists
+            const tailHeight = document.getElementById('tailHeight'); // Assuming the `tailHeight` element exists
+            const wheelbase = document.getElementById('wheelbase'); // Assuming the `wheelbase` element exists
+            const wingspanWithoutWinglets = document.getElementById('wingspanWithoutWinglets'); // Assuming the `wingspanWithoutWinglets` element exists
+            const wingspanWithWinglets = document.getElementById('wingspanWithWinglets'); // Assuming the `wingspanWithWinglets` element exists
+            const cockpitToMainGear = document.getElementById('cockpitToMainGear'); // Assuming the `cockpitToMainGear` element exists
+            const mainGearWidth = document.getElementById('mainGearWidth');
+
+            if (form1 && form2 && runButton) {
+                runButton.addEventListener('click', function(e) {
+                    console.log('Run Algorithm button clicked');
+
+                    e.preventDefault(); // Prevent default form submission
+
+                    // Show the running indicator
+                    if (runningIndicator) {
+                        runningIndicator.classList.remove('hidden');
+                    }
+
+                    // Hide previous prediction result
+                    if (predictionSection) {
+                        predictionSection.classList.add('hidden');
+                        predictionResult.textContent = '';
+                    }
+
+                    // Collect data from form1
+                    const formData1 = new FormData(form1);
+                    // Collect data from form2
+                    const formData2 = new FormData(form2);
+
+                    // Combine formData1 and formData2
+                    for (let [key, value] of formData2.entries()) {
+                        formData1.append(key, value);
+                    }
+                    console.log("Combined formData1", formData1)
+                    if (length) {
+                        const lengthValue = parseFloat(length.textContent.trim()); // Extract numeric value
+                        formData1.append('length', lengthValue);
+                    }
+
+                    if (tailHeight) {
+                        const tailHeightValue = parseFloat(tailHeight.textContent.trim());
+                        formData1.append('tailHeight', tailHeightValue);
+                    }
+
+                    if (wheelbase) {
+                        const wheelbaseValue = parseFloat(wheelbase.textContent.trim());
+                        formData1.append('wheelbase', wheelbaseValue);
+                    }
+
+                    if (wingspanWithoutWinglets) {
+                        const wingspanWithoutWingletsValue = parseFloat(wingspanWithoutWinglets.textContent.trim());
+                        formData1.append('wingspanWithoutWinglets', wingspanWithoutWingletsValue);
+                    }
+
+                    if (wingspanWithWinglets) {
+                        const wingspanWithWingletsValue = parseFloat(wingspanWithWinglets.textContent.trim());
+                        formData1.append('wingspanWithWinglets', wingspanWithWingletsValue);
+                    }
+
+                    if (cockpitToMainGear) {
+                        const cockpitToMainGearValue = parseFloat(cockpitToMainGear.textContent.trim());
+                        formData1.append('cockpitToMainGear', cockpitToMainGearValue);
+                    }
+
+                    if (mainGearWidth) {
+                        const mainGearWidthValue = parseFloat(mainGearWidth.textContent.trim());
+                        formData1.append('mainGearWidth', mainGearWidthValue);
+                    }
+                    // Get CSRF token
+                    const csrfToken = form1.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                    // Send the combined data via fetch
+                    fetch("{% url 'model' %}", { 
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest'  // Add this header
+                        },
+                        body: formData1
+                    })
+                    .then(response => {
+                        console.log('Response Status:', response.status);
+                        if (!response.ok) {
+                            throw new Error(`Server error: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Success:', data);
+
+                        // Hide the running indicator
+                        if (runningIndicator) {
+                            runningIndicator.classList.add('hidden');
+                        }
+
+                        if (data.prediction !== null) {
+                            // Display the prediction result
+                            if (predictionResult) {
+                                predictionResult.textContent = data.prediction;
+                            }
+                            if (predictionSection) {
+                                predictionSection.classList.remove('hidden');
+                            }
+
+                            // Scroll to the prediction section
+                            predictionSection.scrollIntoView({ behavior: 'smooth' });
+                        } else {
+                            // Handle cases where prediction is not available
+                            alert(data.message || 'Prediction could not be completed.');
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                        // Hide the running indicator
+                        if (runningIndicator) {
+                            runningIndicator.classList.add('hidden');
+                        }
+                        alert('An error occurred while processing your request.');
+                    });
+                });
+            } else {
+                console.error('form1, form2, or runButton not found in the DOM');
+            }
+        });
+    </script>
+</body>
+</html>
